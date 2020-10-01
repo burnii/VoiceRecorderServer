@@ -42,16 +42,17 @@ def addOrUpdateMicrophoneConnection(id, addr, acknowledgement):
             STARTTIME: startTimeString,
             ENDTIME: startTimeString
         })
+
+        i = len(connectionInfo) - 1
     else:
         print("update connection: ", i, " ", acknowledgement[0])
         print(acknowledgement)
         connectionInfo[i][DEVICE] = acknowledgement[2]
         connectionInfo[i][ENDTIME] = startTimeString
 
-
     updateSerializedConnections()  
     
-    return startTimeString
+    return connectionInfo[i]
 
 def getIndexOfConnectionname(name):
     global connectionInfo

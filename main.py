@@ -18,13 +18,13 @@ connectionControler.removeAllConnections()
 if config["isUdp"] == False:
    s = socket.socket()
    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-   s.bind(('', 4000))
+   s.bind(('', 4001))
    s.listen(5)
 
 if config["isUdp"] == True:
    sTcp = socket.socket()
    sTcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-   sTcp.bind(('', 4000))
+   sTcp.bind(('', 4001))
    sTcp.listen(5)
 
    s = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -48,7 +48,8 @@ def acknowledge(c, addr, id):
          print("Username: " + acknowledgment[0])
 
          #print(data)
-         startTimeString = connectionControler.addOrUpdateMicrophoneConnection(id, addr, acknowledgment)
+         connectionInfo = connectionControler.addOrUpdateMicrophoneConnection(id, addr, acknowledgment)
+         startTimeString = connectionInfo[connectionControler.STARTTIME]
          print("Datetime: " + startTimeString)
          return acknowledgment, startTimeString
 
@@ -67,7 +68,10 @@ def tcpThread(c, addr, id):
    # Try to set initial data
    acknowledgment, startTimeString = acknowledge(c, addr, id)
    
-   f = open("./" + acknowledgment[0] + "-" + startTimeString + ".pcm", "ab")
+   i = connectionControler.getIndexOfConnectionname(acknowledgment[0])
+   connectionInfo = connectionControler.connectionInfo[i]
+
+   f = open("./" + acknowledgment[0] + "-" + connectionInfo[connectionControler.STARTTIME] + ".pcm", "ab")
    config = configControler.getConfigAsJson()
    c.send((config + "\n").encode("utf-8"))
 
@@ -79,11 +83,12 @@ def tcpThread(c, addr, id):
          print("Connection lost with ", addr)
          connectionControler.removeMicrophoneConnection(id)
       if(data):
-            f.write(data)
-   
+         # write json info
+         writeJsonInfo(connectionInfo, acknowledgment)
 
-
-
+         #write pcm file
+         f.write(data)
+            
 def testConnectionThread(c, addr, id):
    print("Testconnection Thread started")
    while(True):
@@ -99,6 +104,11 @@ def testConnectionThread(c, addr, id):
 
 filesDict = {}
 knownClients = {}
+
+def writeJsonInfo(connectionInfo, acknowledgment):
+   path = "./" + acknowledgment[0] + "-" + connectionInfo[connectionControler.STARTTIME] + ".json"
+   with open(path, "w") as f:
+      json.dump(connectionInfo, f)
 
 def acknowledgeThread():
    while True:
@@ -116,7 +126,6 @@ def acknowledgeThread():
 if(config["isUdp"] == True):
    start_new_thread(acknowledgeThread, ())
 
-
 lo = 0
 
 while True:
@@ -133,11 +142,13 @@ while True:
       print("received", len(data), "from", address)
 
       if data:
-         #print(data)
+         # print(data)
          acknowledgment, recordedData = tryToExtractAcknowledgment(data)
 
          startTime = datetime.datetime.fromtimestamp(int(acknowledgment[1])/1000.0, tz=timezone("Europe/Amsterdam"))
-         startTimeString = startTime.strftime("%d%m%Y%M%H%S")
+
+         connectionInfo = connectionControler.addOrUpdateMicrophoneConnection(str(uuid.uuid4()), address, acknowledgment)
+         startTimeString = connectionInfo[connectionControler.STARTTIME]
 
          lo += len(data)
          f = None
@@ -151,7 +162,12 @@ while True:
                f = open("./" + acknowledgment[0] + "-" + startTimeString + ".pcm", "ab")
 
          #print(recordedData)
-         connectionControler.addOrUpdateMicrophoneConnection(str(uuid.uuid4()), address, acknowledgment)
+         
+
+         #write json info
+         writeJsonInfo(connectionInfo, acknowledgment)
+
+         #write pcm file
          f.write(recordedData)
          print(lo)
 

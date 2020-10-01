@@ -1,3 +1,6 @@
 *.pcm
 __pycache__
 *.pyc
+*.json
+!.config.json
+!.connections.json
