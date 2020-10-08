@@ -54,12 +54,12 @@ def acknowledge(c, addr, id):
          return acknowledgment, startTimeString
 
 def tryToExtractAcknowledgment(data):
-   initialData = data[:25].decode()
+   initialData = data[:40].decode()
    acknowledgment = None
       
    acknowledgment = initialData.split(";")
 
-   return acknowledgment, data[25:]
+   return acknowledgment, data[40:]
 
 
 def tcpThread(c, addr, id):  
@@ -123,10 +123,89 @@ def acknowledgeThread():
          config = configControler.getConfigAsJson()
          c.send((config + "\n").encode("utf-8"))
 
-if(config["isUdp"] == True):
-   start_new_thread(acknowledgeThread, ())
+
+
 
 lo = 0
+
+buffer = []
+userNameBufferDict = {}
+userNameLastPackageCount = {}
+
+def handleBuffersThread():
+   while True:
+      for x in buffer:
+         acknowledgment, recordedData = tryToExtractAcknowledgment(x)
+
+
+         #acknowledgment, recordedData = tryToExtractAcknowledgment(x)
+
+         if acknowledgment[0] not in userNameLastPackageCount:
+            userNameLastPackageCount[acknowledgment[0]] = 0
+            print("Set ", acknowledgment[0], "to ", 0)
+
+         if int(acknowledgment[3]) == (int(userNameLastPackageCount[acknowledgment[0]]) + 1):
+            userNameLastPackageCount[acknowledgment[0]] = acknowledgment[3]
+
+            connectionInfo = connectionControler.addOrUpdateMicrophoneConnection(str(uuid.uuid4()), address, acknowledgment)
+            startTimeString = connectionInfo[connectionControler.STARTTIME]
+
+            f = None
+            print(knownClients)
+            if(acknowledgment[0] in knownClients):
+               if (acknowledgment[0] in filesDict):
+                  f = filesDict[acknowledgment[0]]
+
+               else:
+                  f = open("./" + acknowledgment[0] + "-" + startTimeString + ".pcm", "ab")
+                  filesDict[acknowledgment[0]] = f
+
+            #write json info
+            writeJsonInfo(connectionInfo, acknowledgment)
+
+            #write pcm file
+            f.write(recordedData)
+         #if acknowledgment[0] not in userNameBufferDict:
+         #   userNameBufferDict[acknowledgment[0]] = []
+         
+         #userNameBufferDict[acknowledgment[0]].append(x)
+
+def writeUdpFilesThread():
+   while True:
+      for username, buffer in userNameBufferDict:
+         for x in buffer:
+            acknowledgment, recordedData = tryToExtractAcknowledgment(x)
+
+            if acknowledgment[0] not in userNameLastPackageCount:
+               userNameLastPackageCount[acknowledgment[0]] = 0
+
+            if acknowledgment[3] == (userNameLastPackageCount[acknowledgment[0]] + 1):
+               connectionInfo = connectionControler.addOrUpdateMicrophoneConnection(str(uuid.uuid4()), address, acknowledgment)
+               startTimeString = connectionInfo[connectionControler.STARTTIME]
+
+               f = None
+               print(knownClients)
+               if(acknowledgment[0] in knownClients):
+                  if (acknowledgment[0] in filesDict):
+                     f = filesDict[acknowledgment[0]]
+
+                  else:
+                     f = open("./" + acknowledgment[0] + "-" + startTimeString + ".pcm", "ab")
+                     filesDict[acknowledgment[0]] = f
+
+               #write json info
+               writeJsonInfo(connectionInfo, acknowledgment)
+
+               #write pcm file
+               f.write(recordedData)
+
+
+if(config["isUdp"] == True):
+   start_new_thread(acknowledgeThread, ())
+   start_new_thread(handleBuffersThread, ())
+   #start_new_thread(writeUdpFilesThread, ())
+
+count = 0
 
 while True:
    if config["isUdp"] == False:
@@ -137,39 +216,19 @@ while True:
       start_new_thread(testConnectionThread, (c, addr, id))
 
    if config["isUdp"] == True:
-      print("Waiting for UDP data")
+      #print("Waiting for UDP data")
       data, address = s.recvfrom(512)
-      print("received", len(data), "from", address)
+      #print("received", len(data), "from", address)
 
       if data:
-         # print(data)
+         count = count + 1
+         print(count)
+         buffer.append(data)
          acknowledgment, recordedData = tryToExtractAcknowledgment(data)
+         f = open("./TEEEST.pcm", "ab")
 
-         startTime = datetime.datetime.fromtimestamp(int(acknowledgment[1])/1000.0, tz=timezone("Europe/Amsterdam"))
-
-         connectionInfo = connectionControler.addOrUpdateMicrophoneConnection(str(uuid.uuid4()), address, acknowledgment)
-         startTimeString = connectionInfo[connectionControler.STARTTIME]
-
-         lo += len(data)
-         f = None
-         #print(acknowledgment)
-         print(knownClients)
-         if(acknowledgment[0] in knownClients):
-            if (acknowledgment[0] in filesDict):
-               f = filesDict[acknowledgment[0]]
-
-            else:
-               f = open("./" + acknowledgment[0] + "-" + startTimeString + ".pcm", "ab")
-
-         #print(recordedData)
-         
-
-         #write json info
-         writeJsonInfo(connectionInfo, acknowledgment)
-
-         #write pcm file
          f.write(recordedData)
-         print(lo)
+
 
 
 
