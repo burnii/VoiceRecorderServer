@@ -20,7 +20,7 @@ pathToConnectionsFile = "connections.json"
 
 def updateSerializedConnections():
     global connectionInfo
-    print(connectionInfo)
+    #print(connectionInfo)
     with open(pathToConnectionsFile, "w") as f:
         json.dump(connectionInfo, f)
 
@@ -28,7 +28,7 @@ def addOrUpdateMicrophoneConnection(id, addr, acknowledgement):
     global connectionInfo
     startTime = datetime.datetime.fromtimestamp(int(acknowledgement[1])/1000.0, tz=timezone("Europe/Amsterdam"))
     startTimeString = startTime.strftime("%d%m%Y%M%H%S")
-    print(startTimeString)
+    #print(startTimeString)
 
     i = getIndexOfConnectionname(acknowledgement[0])
 
