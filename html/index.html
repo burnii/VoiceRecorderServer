@@ -1,0 +1,231 @@
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <title>Voicerecorder</title>
+    <style>
+        body {
+            font-family: arial;
+            background-color: whitesmoke;
+        }
+        
+        #logo {
+            height: 52px;
+            margin-bottom: 24px;
+            width: 300px;
+            display: flex;
+            align-items: center;
+            font-size: large;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+            justify-content: flex-end;
+            height: 52px;
+            width: 100%;
+
+        }
+
+        .headerWrapper {
+            display: flex;
+        }
+
+        .header > div {
+            width: 100px;
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            justify-content: center;
+        }
+
+        .header > div:hover {
+            background-color: lightgray;
+        }
+
+        .connectionsWrapper {
+            width: 1366px;
+            height: calc(100% - 92px);
+            margin: auto;
+            background-color: white;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            padding: 8px;
+        }
+
+        .tableHeader {
+            width: 100%;
+            height: 60px;
+            display: flex;
+        }
+        
+        .tableRow {
+            width: 100%;
+            height: 50px;
+            display: flex;
+        }
+
+        .tableColumn {
+            height: 100%;
+            width: 33%;
+            border-bottom: 1px solid grey;
+            display: flex;
+            align-items: center;
+            padding-left: 12px;
+        }
+
+        .configWrapper {
+            width: 1366px;
+            margin: auto;
+            height: calc(100% - 92px);
+            background-color: white;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            padding: 8px;
+        }
+
+        input[type=text], select {
+          width: 100%;
+          padding: 12px 20px;
+          margin: 8px 0;
+          display: inline-block;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          box-sizing: border-box;
+        }
+
+        label {
+            margin-top: 24px;
+            display: block;
+        }
+
+        .selected {
+            background-color: whitesmoke;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        .checkboxWrapper {
+            display: flex;
+            align-items: center;
+            margin-top: 24px;
+        }
+
+        .checkboxWrapper > input {
+            height: 17px;
+            width: 17px;
+        }
+
+        .checkboxWrapper > label {
+            margin-left: 8px;
+            margin-top: 0px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="headerWrapper">
+        <div id="logo"><span>Voicerecorder</span></div>
+        <div class="header">
+            <div class="selected connections"><span>Connections</span></div>
+            <div class="configuration"><span>Configuration</span></div>
+        </div>
+    </div>
+    <div class="connectionsWrapper">
+        <input class="connectionFile" type="file"></input><br>
+        <div class="tableHeader">
+            <div class="tableColumn"><span>Uuid</span></div>
+            <div class="tableColumn"><span>Address</span></div>
+            <div class="tableColumn"><span>Name</span></div>
+            <div class="tableColumn"><span>Device</span></div>
+            <div class="tableColumn"><span>Starttime</span></div>
+            <div class="tableColumn"><span>Endtime</span></div>
+        </div>
+        <div class="tableRow">
+            
+        </div>
+    </div>
+    <div class="configWrapper hide">
+        <input type="file" class="configurationFile" ></input><br>
+        <label for="sampleRate">Samplerate</label>
+        <input id="sampleRate" type="text" placeholder="Samplerate">
+        <div class="checkboxWrapper">
+            <input id="isUdp" type="checkbox"></input>
+            <label for="isUdp">Is UDP</label>
+        </div>
+        
+    </div>
+    
+</body>
+<script>
+    const selection = {
+        CONNECTIONS: "connections",
+        CONFIGURATION: "configuration"
+    };
+
+    let currentSelection = selection.CONNECTIONS;
+
+    let getColumn = function(value) {
+        return "<div class='tableColumn'><span>" + value + "</span></div>"; 
+    }
+
+    let getConnectionRow = function(connection) {
+        return getColumn(connection.uuid) 
+             + getColumn(connection.address)
+             + getColumn(connection.name)
+             + getColumn(connection.device)
+             + getColumn(connection.starttime)
+             + getColumn(connection.endtime)
+    }
+
+    $(".configuration").click(result => {
+        $(".configuration").addClass("selected");
+        $(".connections").removeClass("selected");
+        
+        currentSelection = selection.CONFIGURATION;
+        $(".connectionsWrapper").addClass("hide");
+        $(".configWrapper").removeClass("hide");
+    });
+
+    $(".connections").click(result => {
+        $(".configuration").removeClass("selected");
+        $(".connections").addClass("selected");
+
+        currentSelection = selection.CONNECTIONS;
+        $(".connectionsWrapper").removeClass("hide");
+        $(".configWrapper").addClass("hide");
+    });
+
+    $(".connectionFile").change((event) => {
+        var reader = new FileReader();
+
+        reader.onload = (event) => {
+            var connections = JSON.parse(event.target.result);
+            if(connections != undefined) {
+                for(const connection of connections) {
+                    $(".tableRow").append(getConnectionRow(connection));
+                }
+            }
+        }
+
+        reader.readAsText(event.target.files[0]);
+    });
+
+    $(".configurationFile").change((event) => {
+        var reader = new FileReader();
+
+        reader.onload = (event) => {
+            var configuration = JSON.parse(event.target.result);
+            
+            $("#sampleRate").val(configuration.sampleRate);
+            $("#isUdp").prop("checked", configuration.isUdp);
+        }
+
+        reader.readAsText(event.target.files[0]);
+    });
+
+
+</script>
+</html>
