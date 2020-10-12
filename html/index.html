@@ -134,7 +134,6 @@
         </div>
     </div>
     <div class="connectionsWrapper">
-        <input class="connectionFile" type="file"></input><br>
         <div class="tableHeader">
             <div class="tableColumn"><span>Uuid</span></div>
             <div class="tableColumn"><span>Address</span></div>
@@ -148,7 +147,6 @@
         </div>
     </div>
     <div class="configWrapper hide">
-        <input type="file" class="configurationFile" ></input><br>
         <label for="sampleRate">Samplerate</label>
         <input id="sampleRate" type="text" placeholder="Samplerate">
         <div class="checkboxWrapper">
@@ -198,34 +196,38 @@
         $(".configWrapper").addClass("hide");
     });
 
-    $(".connectionFile").change((event) => {
-        var reader = new FileReader();
+    let updateConfigValues = function() {
+        let config = {
+            isUdp: $("#isUdp").prop("checked"),
+            sampleRate: $("#sampleRate").val()
+        };
 
-        reader.onload = (event) => {
-            var connections = JSON.parse(event.target.result);
-            if(connections != undefined) {
-                for(const connection of connections) {
-                    $(".tableRow").append(getConnectionRow(connection));
-                }
+        let configAsJson = JSON.stringify(config);
+
+        let url = "http://100.119.14.185:5000/updateConfig";
+        $.post(url, config);
+    };
+
+    updateConfigValues();
+
+    $("#isUdp").change(updateConfigValues);
+    $("#sampleRate").change(updateConfigValues);
+
+    let url = "http://100.119.14.185:5000/connections";
+
+    $.getJSON(url, (connections) => {
+        $(".tableRow").empty();
+        if(connections != undefined) {
+            for(const connection of connections) {
+                $(".tableRow").append(getConnectionRow(connection));
             }
         }
-
-        reader.readAsText(event.target.files[0]);
     });
 
-    $(".configurationFile").change((event) => {
-        var reader = new FileReader();
-
-        reader.onload = (event) => {
-            var configuration = JSON.parse(event.target.result);
-            
-            $("#sampleRate").val(configuration.sampleRate);
-            $("#isUdp").prop("checked", configuration.isUdp);
-        }
-
-        reader.readAsText(event.target.files[0]);
+    url = "http://100.119.14.185:5000/config";
+    $.getJSON(url, (config) => {
+        $("#sampleRate").val(config.sampleRate);
+        $("#isUdp").prop("checked", config.isUdp);
     });
-
-
 </script>
 </html>

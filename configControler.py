@@ -1,3 +1,5 @@
+from __future__ import print_function
+import logging
 import sys
 import json
 import os.path
@@ -17,12 +19,23 @@ config = None
 pathToConfigFile = "config.json"
 
 if(not os.path.isfile(pathToConfigFile)):
-    with open(pathToConfigFile, "w") as f:
-        json.dump(defaultConfig, f)
+    writeConfig(defaultConfig)
 
 with open(pathToConfigFile, "r") as f:
-    config = json.load(f)
+    if(f.read() == ""):
+        config = defaultConfig
+    else:
+        config = json.load(f)
+    
 
 def getConfigAsJson():
     return json.dumps(config)
+
+def updateConfig(newConfig):
+    config = newConfig
+    writeConfig(config)
+
+def writeConfig(conf):
+    with open(pathToConfigFile, "w") as f:
+        json.dump(conf, f)
 

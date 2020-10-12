@@ -1,4 +1,1 @@
-{
-    "sampleRate": 44100,
-    "isUdp": true
-}   
+{"isUdp": "true", "sampleRate": "44100"}

@@ -132,9 +132,14 @@ buffer = []
 userNameBufferDict = {}
 userNameLastPackageCount = {}
 
-def writeUdpFilesThread():
+def writeUdpFilesThreadUsername(username):
+   failedCount = 0
+
+   last = time.time()
    while True:
-      for x in buffer:
+      usernameBuffer = userNameBufferDict[username]
+
+      for x in list(usernameBuffer):
          acknowledgment, recordedData = tryToExtractAcknowledgment(x)
 
          if acknowledgment[0] not in userNameLastPackageCount:
@@ -142,6 +147,60 @@ def writeUdpFilesThread():
             #print("Set ", acknowledgment[0], "to ", 0)
 
          if int(acknowledgment[3]) == (int(userNameLastPackageCount[acknowledgment[0]]) + 1):
+            failedCount = 0
+            last = time.time()
+            userNameLastPackageCount[acknowledgment[0]] = acknowledgment[3]
+
+            connectionInfo = connectionControler.addOrUpdateMicrophoneConnection(str(uuid.uuid4()), address, acknowledgment)
+            startTimeString = connectionInfo[connectionControler.STARTTIME]
+
+            f = None
+            #print(knownClients)
+            if(acknowledgment[0] in knownClients):
+               if (acknowledgment[0] in filesDict):
+                  f = filesDict[acknowledgment[0]]
+               else:
+                  f = open("./" + acknowledgment[0] + "-" + startTimeString + ".pcm", "ab")
+                  filesDict[acknowledgment[0]] = f
+
+            #write json info
+            writeJsonInfo(connectionInfo, acknowledgment)
+
+            print("write ", len(recordedData), " to ", acknowledgment[0], " Nr: ", acknowledgment[3])
+            #write pcm file
+            f.write(recordedData)
+            usernameBuffer.remove(x)
+      
+      failedCount += 1
+
+      if(time.time() - last > 3 and len(usernameBuffer) > 0):
+        for bla in usernameBuffer:
+           ack, data = tryToExtractAcknowledgment(bla)
+           print(ack)
+        print(len(usernameBuffer))
+        userNameLastPackageCount[username] = str(int(userNameLastPackageCount[username]) + 1)
+        print("Increase count to ", userNameLastPackageCount[username])
+        last = time.time()
+        failedCount = 0
+
+      
+
+
+def writeUdpFilesThread():
+   failedAttempts = 0
+   while True:
+      for x in list(buffer):
+         acknowledgment, recordedData = tryToExtractAcknowledgment(x)
+
+         if acknowledgment[0] not in userNameLastPackageCount:
+            userNameLastPackageCount[acknowledgment[0]] = 0
+            #print("Set ", acknowledgment[0], "to ", 0)
+
+         print("looking for package count ", userNameLastPackageCount[acknowledgment[0]])
+
+         if int(acknowledgment[3]) == (int(userNameLastPackageCount[acknowledgment[0]]) + 1 or failedAttempts > 10):
+            failedAttempts = 0
+            buffer.remove(x)
             userNameLastPackageCount[acknowledgment[0]] = acknowledgment[3]
 
             connectionInfo = connectionControler.addOrUpdateMicrophoneConnection(str(uuid.uuid4()), address, acknowledgment)
@@ -166,7 +225,7 @@ def writeUdpFilesThread():
 
 if(config["isUdp"] == True):
    start_new_thread(acknowledgeThread, ())
-   start_new_thread(writeUdpFilesThread, ())
+   #start_new_thread(writeUdpFilesThread, ())
 
 count = 0
 
@@ -186,6 +245,18 @@ while True:
       if data:
          count = count + 1
          buffer.append(data)
+
+         acknowledgment, recordedData = tryToExtractAcknowledgment(data)
+
+         if acknowledgment[0] not in userNameBufferDict.keys():
+            userNameBufferDict[acknowledgment[0]] = []
+            print("Start new Udp Writing Thread for ", acknowledgment[0])
+            start_new_thread(writeUdpFilesThreadUsername, (acknowledgment[0],))
+            
+         userNameBufferDict[acknowledgment[0]].append(data)
+
+         print("Got ", len(data), acknowledgment[3])
+
 
 
 
