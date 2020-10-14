@@ -5,23 +5,25 @@ import pyaudio
 from _thread import *
 import threading
 import datetime
+import connectionControler
 import configControler
 import json
 import time
 import uuid
-import connectionControler
 from pytz import timezone
 
 config = configControler.config
 connectionControler.removeAllConnections()
 
 if config["isUdp"] == False:
+   print("Create tcp sockets")
    s = socket.socket()
    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
    s.bind(('', 4001))
    s.listen(5)
 
 if config["isUdp"] == True:
+   print("Create udp sockets")
    sTcp = socket.socket()
    sTcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
    sTcp.bind(('', 4001))
@@ -29,7 +31,7 @@ if config["isUdp"] == True:
 
    s = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-   s.bind(('', 4000))
+   s.bind(('', 4001))
 
 def acknowledge(c, addr, id):
    hasSentInitialData = False
@@ -231,6 +233,7 @@ count = 0
 
 while True:
    if config["isUdp"] == False:
+      print("Wait for tcp connection")
       c, addr = s.accept()
       id = str(uuid.uuid4())
       print ('Got connection from', addr)
@@ -238,9 +241,9 @@ while True:
       start_new_thread(testConnectionThread, (c, addr, id))
 
    if config["isUdp"] == True:
-      #print("Waiting for UDP data")
+      print("Waiting for UDP data")
       data, address = s.recvfrom(512)
-      #print("received", len(data), "from", address)
+      print("received", len(data), "from", address)
 
       if data:
          count = count + 1

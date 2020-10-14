@@ -198,7 +198,7 @@
 
     let updateConfigValues = function() {
         let config = {
-            isUdp: $("#isUdp").prop("checked"),
+            isUdp: ($("#isUdp").prop("checked") == "true"),
             sampleRate: $("#sampleRate").val()
         };
 

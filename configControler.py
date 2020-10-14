@@ -14,9 +14,13 @@ defaultConfig = {
     ISUDP: False
 }
 
-config = None
+config = defaultConfig
 
 pathToConfigFile = "config.json"
+
+def writeConfig(conf):
+    with open(pathToConfigFile, "w") as f:
+        json.dump(conf, f)
 
 if(not os.path.isfile(pathToConfigFile)):
     writeConfig(defaultConfig)
@@ -25,6 +29,7 @@ with open(pathToConfigFile, "r") as f:
     if(f.read() == ""):
         config = defaultConfig
     else:
+        f.seek(0)
         config = json.load(f)
     
 
@@ -35,7 +40,5 @@ def updateConfig(newConfig):
     config = newConfig
     writeConfig(config)
 
-def writeConfig(conf):
-    with open(pathToConfigFile, "w") as f:
-        json.dump(conf, f)
+
 
