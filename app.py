@@ -15,7 +15,8 @@ def get_config():
 
 @app.route("/updateConfig", methods = ["POST"])
 def post_config():
-    configControler.updateConfig(request.form)
+    print(request.form.to_dict())
+    configControler.updateConfig(request.form.to_dict())
     return "asd"
 
 if __name__ == "__main__":

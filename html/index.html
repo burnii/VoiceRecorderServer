@@ -141,6 +141,8 @@
             <div class="tableColumn"><span>Device</span></div>
             <div class="tableColumn"><span>Starttime</span></div>
             <div class="tableColumn"><span>Endtime</span></div>
+            <div class="tableColumn"><span>Lost Packages</span></div>
+            <div class="tableColumn"><span>Sent Packages</span></div>
         </div>
         <div class="tableRow">
             
@@ -176,6 +178,8 @@
              + getColumn(connection.device)
              + getColumn(connection.starttime)
              + getColumn(connection.endtime)
+             + getColumn(connection.lostpackages)
+             + getColumn(connection.sentpackages)
     }
 
     $(".configuration").click(result => {
@@ -198,7 +202,7 @@
 
     let updateConfigValues = function() {
         let config = {
-            isUdp: ($("#isUdp").prop("checked") == "true"),
+            isUdp: $("#isUdp").prop("checked"),
             sampleRate: $("#sampleRate").val()
         };
 
@@ -207,11 +211,6 @@
         let url = "http://100.119.14.185:5000/updateConfig";
         $.post(url, config);
     };
-
-    updateConfigValues();
-
-    $("#isUdp").change(updateConfigValues);
-    $("#sampleRate").change(updateConfigValues);
 
     let url = "http://100.119.14.185:5000/connections";
 
@@ -228,6 +227,11 @@
     $.getJSON(url, (config) => {
         $("#sampleRate").val(config.sampleRate);
         $("#isUdp").prop("checked", config.isUdp);
+
+        $("#isUdp").change(updateConfigValues);
+        $("#sampleRate").change(updateConfigValues);
     });
+
+
 </script>
 </html>

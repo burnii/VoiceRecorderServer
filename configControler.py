@@ -37,6 +37,7 @@ def getConfigAsJson():
     return json.dumps(config)
 
 def updateConfig(newConfig):
+    newConfig[ISUDP] = (newConfig[ISUDP] == "true")
     config = newConfig
     writeConfig(config)
 

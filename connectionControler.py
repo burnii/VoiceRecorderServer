@@ -11,6 +11,8 @@ NAME = "name"
 DEVICE = "device"
 STARTTIME = "starttime"
 ENDTIME = "endtime"
+LOSTPACKAGES = "lostpackages"
+SENTPACKAGES = "sentpackages"
 
 config = None
 
@@ -40,7 +42,9 @@ def addOrUpdateMicrophoneConnection(id, addr, acknowledgement):
             NAME: acknowledgement[0],
             DEVICE: acknowledgement[2],
             STARTTIME: startTimeString,
-            ENDTIME: startTimeString
+            ENDTIME: startTimeString,
+            LOSTPACKAGES: 0,
+            SENTPACKAGES: 0
         })
 
         i = len(connectionInfo) - 1
@@ -65,8 +69,6 @@ def getIndexOfConnectionname(name):
 
     return None
 
-
-    
 def removeMicrophoneConnection(id):
     global connectionInfo
 
