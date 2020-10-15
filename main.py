@@ -146,6 +146,15 @@ def getMaxPackageCount(usernamebuffer):
 
    return max
 
+def getMinPackageCount(usernamebuffer):
+   min = 0
+   for buffer in usernamebuffer:
+      ack, data = tryToExtractAcknowledgment(buffer)
+      if int(ack[3]) < min:
+         min = int(ack[3])
+
+   return min
+
 def writeUdpFilesThreadUsername(username):
    failedCount = 0
    lostPackages = 0
