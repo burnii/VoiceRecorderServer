@@ -194,7 +194,6 @@ def writeUdpFilesThreadUsername(username):
             f.write(recordedData)
             usernameBuffer.remove(x)
       
-      failedCount += 1
 
       if(len(usernameBuffer) > 0):
          for buffer in usernameBuffer:
@@ -251,17 +250,3 @@ while True:
          userNameBufferDict[acknowledgment[0]].append(data)
 
          print("Got ", len(data), acknowledgment[3])
-
-
-
-
-
-
-      
-
-   
-
-
-
-
-      
