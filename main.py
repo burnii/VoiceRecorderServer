@@ -158,19 +158,21 @@ def getMinPackageCount(usernamebuffer):
 def writeUdpFilesThreadUsername(username):
    lostPackages = 0
 
+   last = time.time()
    while True:
       usernameBuffer = userNameBufferDict[username]
 
       for x in list(usernameBuffer):
          acknowledgment, recordedData = tryToExtractAcknowledgment(x)
          
-
+         
          if acknowledgment[0] not in userNameLastPackageCount:
             userNameLastPackageCount[acknowledgment[0]] = 0
             #print("Set ", acknowledgment[0], "to ", 0)
          
          
          if int(acknowledgment[3]) == (int(userNameLastPackageCount[acknowledgment[0]]) + 1):
+            last = time.time()
             userNameLastPackageCount[acknowledgment[0]] = acknowledgment[3]
 
             connectionInfo = connectionControler.addOrUpdateMicrophoneConnection(str(uuid.uuid4()), address, acknowledgment)
@@ -195,15 +197,16 @@ def writeUdpFilesThreadUsername(username):
             usernameBuffer.remove(x)
       
 
-      if(len(usernameBuffer) > 0):
+      if(time.time() - last > 3 and len(usernameBuffer) > 0):
          for buffer in usernameBuffer:
            ack, data = tryToExtractAcknowledgment(buffer)
-           print(ack)
+           #print(ack)
       
          # Workaround da manchmal packages mit zu kleinen nummern im buffer bleiben
          if int(userNameLastPackageCount[acknowledgment[0]]) > getMaxPackageCount(usernameBuffer):
             usernameBuffer.clear()
 
+         last = time.time()
          i = connectionControler.getIndexOfConnectionname(username)
          connectionInfo = connectionControler.connectionInfo[i]
 
@@ -232,9 +235,9 @@ while True:
       start_new_thread(testConnectionThread, (c, addr, id))
 
    if config["isUdp"] == True:
-      print("Waiting for UDP data")
+      #print("Waiting for UDP data")
       data, address = s.recvfrom(512)
-      print("received", len(data), "from", address)
+      #print("received", len(data), "from", address)
 
       if data:
          count = count + 1
@@ -249,4 +252,4 @@ while True:
             
          userNameBufferDict[acknowledgment[0]].append(data)
 
-         print("Got ", len(data), acknowledgment[3])
+         print("Got ", len(data), acknowledgment[3], "for ", acknowledgment[0])

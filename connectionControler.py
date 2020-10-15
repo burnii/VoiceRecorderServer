@@ -49,8 +49,8 @@ def addOrUpdateMicrophoneConnection(id, addr, acknowledgement):
 
         i = len(connectionInfo) - 1
     else:
-        print("update connection: ", i, " ", acknowledgement[0])
-        print(acknowledgement)
+        #print("update connection: ", i, " ", acknowledgement[0])
+        #print(acknowledgement)
         connectionInfo[i][DEVICE] = acknowledgement[2]
         connectionInfo[i][ENDTIME] = startTimeString
 
@@ -63,8 +63,6 @@ def getIndexOfConnectionname(name):
 
     for i in range(len(connectionInfo)):
         if(connectionInfo[i][NAME] == str(name)):
-            print(connectionInfo[i][NAME])
-            print(name)
             return i
 
     return None
