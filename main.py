@@ -147,7 +147,7 @@ def getMaxPackageCount(usernamebuffer):
    return max
 
 def getMinPackageCount(usernamebuffer):
-   min = 0
+   min = sys.maxsize
    for buffer in usernamebuffer:
       ack, data = tryToExtractAcknowledgment(buffer)
       if int(ack[3]) < min:
@@ -156,10 +156,8 @@ def getMinPackageCount(usernamebuffer):
    return min
 
 def writeUdpFilesThreadUsername(username):
-   failedCount = 0
    lostPackages = 0
 
-   last = time.time()
    while True:
       usernameBuffer = userNameBufferDict[username]
 
@@ -173,9 +171,6 @@ def writeUdpFilesThreadUsername(username):
          
          
          if int(acknowledgment[3]) == (int(userNameLastPackageCount[acknowledgment[0]]) + 1):
-            failedCount = 0
-            last = time.time()
-            
             userNameLastPackageCount[acknowledgment[0]] = acknowledgment[3]
 
             connectionInfo = connectionControler.addOrUpdateMicrophoneConnection(str(uuid.uuid4()), address, acknowledgment)
@@ -201,11 +196,11 @@ def writeUdpFilesThreadUsername(username):
       
       failedCount += 1
 
-      if(time.time() - last > 3 and len(usernameBuffer) > 0):
+      if(len(usernameBuffer) > 0):
          for buffer in usernameBuffer:
            ack, data = tryToExtractAcknowledgment(buffer)
            print(ack)
-
+      
          # Workaround da manchmal packages mit zu kleinen nummern im buffer bleiben
          if int(userNameLastPackageCount[acknowledgment[0]]) > getMaxPackageCount(usernameBuffer):
             usernameBuffer.clear()
@@ -215,11 +210,12 @@ def writeUdpFilesThreadUsername(username):
 
          connectionInfo[connectionControler.LOSTPACKAGES] = lostPackages
 
-         userNameLastPackageCount[username] = str(int(userNameLastPackageCount[username]) + 1)
-         lostPackages += 1
+         #userNameLastPackageCount[username] = str(int(userNameLastPackageCount[username]) + 1)
+         nextMinPackage = getMinPackageCount(usernameBuffer) - 1
+         lostPackages += (nextMinPackage - int(userNameLastPackageCount[username]))
+         userNameLastPackageCount[username] = str(nextMinPackage)
+         #lostPackages += 1
          print("Increase count to ", userNameLastPackageCount[username])
-         last = time.time()
-         failedCount = 0
 
 if(config["isUdp"] == True):
    start_new_thread(acknowledgeThread, ())

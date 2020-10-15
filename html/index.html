@@ -100,7 +100,7 @@
         }
 
         .selected {
-            background-color: whitesmoke;
+            background-color: lightgray;
         }
 
         .hide {
@@ -140,12 +140,9 @@
             <div class="tableColumn"><span>Name</span></div>
             <div class="tableColumn"><span>Device</span></div>
             <div class="tableColumn"><span>Starttime</span></div>
-            <div class="tableColumn"><span>Endtime</span></div>
-            <div class="tableColumn"><span>Lost Packages</span></div>
-            <div class="tableColumn"><span>Sent Packages</span></div>
-        </div>
-        <div class="tableRow">
-            
+            <div class="tableColumn"><span>Endtime (UDP)</span></div>
+            <div class="tableColumn"><span>Lost Packages (UDP)</span></div>
+            <div class="tableColumn"><span>Sent Packages (UDP)</span></div>
         </div>
     </div>
     <div class="configWrapper hide">
@@ -171,15 +168,33 @@
         return "<div class='tableColumn'><span>" + value + "</span></div>"; 
     }
 
+    let formatDateTime = function(dateTimeString) {
+        return dateTimeString.substring(0, 2) + "/"
+            + dateTimeString.substring(2, 4) + "/"
+            + dateTimeString.substring(4, 8) + " "
+            + dateTimeString.substring(10, 12) + ":"
+            + dateTimeString.substring(8, 10) + ":"
+            + dateTimeString.substring(12, 14)
+
+    }
+
+    let buildLostPackageValue = function(connection) {
+        if(parseInt(connection.sentpackages) > 0) {
+            return connection.lostpackages + " (" + Math.round(parseInt(connection.lostpackages) / parseInt(connection.sentpackages) * 100) + "%)";
+        } else {
+            return "0";
+        }
+    }
+
     let getConnectionRow = function(connection) {
         return getColumn(connection.uuid) 
              + getColumn(connection.address)
              + getColumn(connection.name)
              + getColumn(connection.device)
-             + getColumn(connection.starttime)
-             + getColumn(connection.endtime)
-             + getColumn(connection.lostpackages)
-             + getColumn(connection.sentpackages)
+             + getColumn(formatDateTime(connection.starttime))
+             + getColumn(formatDateTime(connection.endtime))
+             + getColumn(buildLostPackageValue(connection))
+             + getColumn(connection.sentpackages);
     }
 
     $(".configuration").click(result => {
@@ -218,7 +233,8 @@
         $(".tableRow").empty();
         if(connections != undefined) {
             for(const connection of connections) {
-                $(".tableRow").append(getConnectionRow(connection));
+                console.log(connection)
+                $(".connectionsWrapper").append("<div class='tableRow'>" + getConnectionRow(connection) +  "</div>");
             }
         }
     });
